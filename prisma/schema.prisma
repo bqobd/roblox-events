@@ -1,35 +1,71 @@
-generator client { provider = "prisma-client-js" }
-datasource db { provider = "postgresql"; url = env("DATABASE_URL") }
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
 
 enum Role { USER CREATOR ADMIN }
+enum VerificationMethod { PROFILE_CODE GAME_DESC }
+enum VerificationStatus { PENDING VERIFIED REJECTED }
 enum EventStatus { DRAFT PUBLISHED REJECTED }
 
 model User {
-  id        String   @id @default(cuid())
-  email     String   @unique
-  password  String
-  role      Role     @default(USER)
-  events    Event[]
-  createdAt DateTime @default(now())
+  id         String   @id @default(cuid())
+  email      String   @unique
+  password   String
+  name       String?
+  role       Role     @default(USER)
+  robloxName String?
+  createdAt  DateTime @default(now())
+  events     Event[]
+  verifs     CreatorVerification[]
+}
+
+model CreatorVerification {
+  id         String              @id @default(cuid())
+  userId     String
+  user       User                @relation(fields: [userId], references: [id])
+  method     VerificationMethod
+  code       String
+  gameId     String?
+  status     VerificationStatus  @default(PENDING)
+  createdAt  DateTime            @default(now())
+  verifiedAt DateTime?
 }
 
 model Game {
-  id    String @id
-  name  String
-  events Event[]
+  id          String  @id // Roblox universeId or placeId
+  name        String
+  iconUrl     String?
+  creatorName String?
+  genre       String?
+  updatedAt   DateTime @updatedAt
+  events      Event[]
 }
 
 model Event {
-  id          String   @id @default(cuid())
+  id          String      @id @default(cuid())
   gameId      String
-  game        Game     @relation(fields: [gameId], references: [id])
+  game        Game        @relation(fields: [gameId], references: [id])
   userId      String
-  user        User     @relation(fields: [userId], references: [id])
+  user        User        @relation(fields: [userId], references: [id])
   title       String
   description String
   startsAt    DateTime
   endsAt      DateTime
   linkUrl     String
+  imageUrl    String?
   status      EventStatus @default(PUBLISHED)
-  createdAt   DateTime @default(now())
+  featured    Boolean     @default(false)
+  createdAt   DateTime    @default(now())
+}
+
+model Follow {
+  id        String   @id @default(cuid())
+  userId    String
+  gameId    String
+  createdAt DateTime @default(now())
 }
